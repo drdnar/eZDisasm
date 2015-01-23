@@ -52,6 +52,7 @@ namespace eZDisasm
             bool alignArgs = true;
             bool useTabs = false;
             bool showAddresses = false;
+            bool pause = false;
 
             #region Parse Arguments
             Queue<ArgumentType> expectedArgs = new Queue<ArgumentType>();
@@ -174,6 +175,12 @@ namespace eZDisasm
                                             break;
                                         case 'D':
                                             showAddresses = true;
+                                            break;
+                                        case 'p':
+                                            pause = false;
+                                            break;
+                                        case 'P':
+                                            pause = true;
                                             break;
                                         default:
                                             return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
@@ -356,12 +363,13 @@ namespace eZDisasm
                         Console.Write(" ");
                     Console.WriteLine(instr.InstructionArguments);
                 }
+                else
+                    Console.WriteLine();
             }
 
+            if (pause)
+                Console.ReadKey();
 
-#if DEBUG
-            Console.ReadKey();
-#endif
             return (int)ErrorCode.NoError;
         }
 

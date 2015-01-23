@@ -130,6 +130,14 @@ namespace eZDisasm
             return r;
         }
 
+        static string SignedByte(int x)
+        {
+            if (x >= 0)
+                return x.ToString("X2");
+            else
+                return "-" + (-x).ToString("X2");
+        }
+
         protected void DisassembleInstruction()
         {
             unchecked
@@ -164,7 +172,7 @@ namespace eZDisasm
                                         if (HasBaseAddress)
                                             CurrentInstruction.InstructionArguments = LabelPrefixString + branchTarget.ToString(Z80PlainMode ? Format2Byte : Format3Byte);
                                         else
-                                            CurrentInstruction.InstructionArguments = branchTarget.ToString("X2");
+                                            CurrentInstruction.InstructionArguments = SignedByte(branchTarget);
                                         break;
                                     case 3:
                                         branchTarget = (sbyte)Data[CurrentByte++];
@@ -178,7 +186,7 @@ namespace eZDisasm
                                         if (HasBaseAddress)
                                             CurrentInstruction.InstructionArguments = LabelPrefixString + branchTarget.ToString(Z80PlainMode ? Format2Byte : Format3Byte);
                                         else
-                                            CurrentInstruction.InstructionArguments = branchTarget.ToString("X2");
+                                            CurrentInstruction.InstructionArguments = SignedByte(branchTarget);
                                         break;
                                     case 4:
                                     case 5:
@@ -195,7 +203,7 @@ namespace eZDisasm
                                         if (HasBaseAddress)
                                             CurrentInstruction.InstructionArguments = TableCC[GetField(Field.qq, b)] + ", " + LabelPrefixString + branchTarget.ToString(Z80PlainMode ? Format2Byte : Format3Byte);
                                         else
-                                            CurrentInstruction.InstructionArguments = TableCC[GetField(Field.qq, b)] + ", " + branchTarget.ToString("X2");
+                                            CurrentInstruction.InstructionArguments = TableCC[GetField(Field.qq, b)] + ", " + SignedByte(branchTarget);
                                         break;
                                 }
                                 break;
@@ -688,7 +696,7 @@ namespace eZDisasm
                                             break;
                                         case 1:
                                             CurrentInstruction.InstructionName = "lea";
-                                            CurrentInstruction.InstructionArguments = "ix, iy + " + ((sbyte)Data[CurrentByte++]).ToString("X2");
+                                            CurrentInstruction.InstructionArguments = "ix, iy + " + SignedByte((sbyte)Data[CurrentByte++]);
                                             break;
                                         case 2:
                                             CurrentInstruction.InstructionName = "tst";
@@ -726,7 +734,7 @@ namespace eZDisasm
                                         break;
                                     case 2:
                                         CurrentInstruction.InstructionName = "lea";
-                                        CurrentInstruction.InstructionArguments = "iy, ix + " + ((sbyte)Data[CurrentByte++]).ToString("X2");
+                                        CurrentInstruction.InstructionArguments = "iy, ix + " + SignedByte((sbyte)Data[CurrentByte++]);
                                         break;
                                     case 3:
                                     case 6:
@@ -734,7 +742,7 @@ namespace eZDisasm
                                         break;
                                     case 4:
                                         CurrentInstruction.InstructionName = "pea";
-                                        CurrentInstruction.InstructionArguments = "ix + " + ((sbyte)Data[CurrentByte++]).ToString("X2");
+                                        CurrentInstruction.InstructionArguments = "ix + " + SignedByte((sbyte)Data[CurrentByte++]);
                                         break;
                                     case 5:
                                         CurrentInstruction.InstructionName = "ld";
@@ -767,7 +775,7 @@ namespace eZDisasm
                                         break;
                                     case 4:
                                         CurrentInstruction.InstructionName = "pea";
-                                        CurrentInstruction.InstructionArguments = "iy + " + ((sbyte)Data[CurrentByte++]).ToString("X2");
+                                        CurrentInstruction.InstructionArguments = "iy + " + SignedByte((sbyte)Data[CurrentByte++]);
                                         break;
                                     case 5:
                                         CurrentInstruction.InstructionName = "ld";
@@ -957,15 +965,15 @@ namespace eZDisasm
                 {
                     case 0x21:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = indexRegister + ", " + (Data[CurrentByte + 2] | (Data[CurrentByte + 3] << 8)).ToString("X4");
+                        CurrentInstruction.InstructionArguments = indexRegister + ", " + ReadImmWord().ToString(WordDataFormatString);
                         break;
                     case 0x22:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = "(" + (Data[CurrentByte + 2] | (Data[CurrentByte + 3] << 8)).ToString("X4") + "), " + indexRegister;
+                        CurrentInstruction.InstructionArguments = "(" + ReadImmWord().ToString(WordDataFormatString) + "), " + indexRegister;
                         break;
                     case 0x2A:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = indexRegister + ", (" + (Data[CurrentByte + 2] | (Data[CurrentByte + 3] << 8)).ToString("X4") + ")";
+                        CurrentInstruction.InstructionArguments = indexRegister + ", (" + ReadImmWord().ToString(WordDataFormatString) + ")";
                         break;
                     case 0x23:
                         CurrentInstruction.InstructionName = "inc";
@@ -985,7 +993,7 @@ namespace eZDisasm
                         break;
                     case 0x34:
                         CurrentInstruction.InstructionName = "inc";
-                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + ")";
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                         break;
                     case 0x25:
                         CurrentInstruction.InstructionName = "dec";
@@ -997,19 +1005,19 @@ namespace eZDisasm
                         break;
                     case 0x35:
                         CurrentInstruction.InstructionName = "dec";
-                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + ")";
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                         break;
                     case 0x26:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = indexRegister + "h, " + ((sbyte)Data[CurrentByte + 2]).ToString("X2");
+                        CurrentInstruction.InstructionArguments = indexRegister + "h, " + SignedByte((sbyte)Data[CurrentByte++]);
                         break;
                     case 0x2E:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = indexRegister + "l, " + ((sbyte)Data[CurrentByte + 2]).ToString("X2");
+                        CurrentInstruction.InstructionArguments = indexRegister + "l, " + SignedByte((sbyte)Data[CurrentByte++]);
                         break;
                     case 0x36:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + "), " + Data[CurrentByte + 3].ToString("X2");
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + Data[CurrentByte++].ToString("X2");
                         break;
                     case 0x09:
                         CurrentInstruction.InstructionName = "add";
@@ -1042,7 +1050,7 @@ namespace eZDisasm
                     case 0x75:
                     case 0x77:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + "), " + TableR[GetField(Field.z, b)];
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + TableR[GetField(Field.z, b)];
                         break;
                     case 0x46:
                     case 0x4E:
@@ -1052,7 +1060,7 @@ namespace eZDisasm
                     case 0x6E:
                     case 0x7E:
                         CurrentInstruction.InstructionName = "ld";
-                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.y, b)] + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + ")";
+                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.y, b)] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                         break;
                     case 0x84:
                     case 0x85:
@@ -1082,7 +1090,7 @@ namespace eZDisasm
                     case 0xB6:
                     case 0xBE:
                         CurrentInstruction.InstructionName = TableAlu[GetField(Field.y, b)];
-                        CurrentInstruction.InstructionArguments = TableAluArg[GetField(Field.y, b)] + "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte + 2]).ToString("X2") + ")";
+                        CurrentInstruction.InstructionArguments = TableAluArg[GetField(Field.y, b)] + "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                         break;
                     case 0xE1:
                         CurrentInstruction.InstructionName = "pop";
@@ -1108,38 +1116,38 @@ namespace eZDisasm
                                 CurrentInstruction.InstructionName = TableRot[GetField(Field.y, b)];
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = TableRot[GetField(Field.y, b)] + "(" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                    CurrentInstruction.InstructionArguments = TableRot[GetField(Field.y, b)] + "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                 break;
                             case 1:
                                 CurrentInstruction.InstructionName = "bit";
                                 if (GetField(Field.z, b) != 6 && !Z80PlainMode)
                                     CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                 break;
                             case 2:
                                 CurrentInstruction.InstructionName = "res";
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                 break;
                             case 3:
                                 CurrentInstruction.InstructionName = "set";
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + ((sbyte)Data[CurrentByte - 1]).ToString("X2") + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
                                 break;
                         }
                         CurrentByte++;
