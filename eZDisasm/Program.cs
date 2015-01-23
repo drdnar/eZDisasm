@@ -15,6 +15,7 @@ namespace eZDisasm
         {
             BaseAddress,
             InputFileName,
+            OutputFileName,
         }
 
         enum ErrorCode
@@ -53,6 +54,11 @@ namespace eZDisasm
             bool useTabs = false;
             bool showAddresses = false;
             bool pause = false;
+            bool forceWriteStdOut = false;
+            bool writeStdOut = true;
+            bool writeOutputFile = false;
+            string outputFileName = "";
+            bool ircMode = false;
 
             #region Parse Arguments
             Queue<ArgumentType> expectedArgs = new Queue<ArgumentType>();
@@ -82,6 +88,9 @@ namespace eZDisasm
                                 break;
                             case ArgumentType.InputFileName:
                                 inputFileName = args[curArg++];
+                                break;
+                            case ArgumentType.OutputFileName:
+                                outputFileName = args[curArg++];
                                 break;
                         }
                     }
@@ -129,58 +138,76 @@ namespace eZDisasm
                                             binaryInputFile = true;
                                             expectedArgs.Enqueue(ArgumentType.InputFileName);
                                             break;
-                                        case 'e':
+                                        case 'E':
                                             z80ClassicMode = false;
                                             break;
-                                        case 'E':
+                                        case 'e':
                                             /*if (adlMode)
                                                 return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -a is mutually exclusive with -E");*/
                                             adlMode = false;
                                             z80ClassicMode = true;
                                             break;
-                                        case 'a':
+                                        case 'A':
                                             if (z80ClassicMode)
                                                 return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -a is mutually exclusive with -E");
                                             adlMode = true;
                                             break;
-                                        case 'A':
+                                        case 'a':
                                             adlMode = false;
                                             break;
-                                        case 'l':
+                                        case 'L':
                                             addLabels = true;
                                             break;
-                                        case 'L':
+                                        case 'l':
                                             addLabels = false;
                                             break;
-                                        case 'x':
+                                        case 'X':
                                             showOpcodes = true;
                                             break;
-                                        case 'X':
+                                        case 'x':
                                             showOpcodes = false;
                                             break;
-                                        case 't':
+                                        case 'T':
                                             alignArgs = true;
                                             break;
-                                        case 'T':
+                                        case 't':
                                             alignArgs = false;
                                             break;
-                                        case 's':
+                                        case 'S':
                                             useTabs = false;
                                             break;
-                                        case 'S':
+                                        case 's':
                                             useTabs = true;
                                             break;
-                                        case 'd':
+                                        case 'D':
                                             showAddresses = false;
                                             break;
-                                        case 'D':
+                                        case 'd':
                                             showAddresses = true;
                                             break;
-                                        case 'p':
+                                        case 'P':
                                             pause = false;
                                             break;
-                                        case 'P':
+                                        case 'p':
                                             pause = true;
+                                            break;
+                                        case 'o':
+                                            if (writeOutputFile)
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate -o argument");
+                                            expectedArgs.Enqueue(ArgumentType.OutputFileName);
+                                            writeOutputFile = true;
+                                            if (!forceWriteStdOut)
+                                                writeStdOut = false;
+                                            break;
+                                        case 'O':
+                                            writeStdOut = true;
+                                            forceWriteStdOut = true;
+                                            break;
+                                        case 'c':
+                                            ircMode = true;
+                                            break;
+                                        case 'C':
+                                            ircMode = false;
                                             break;
                                         default:
                                             return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
@@ -296,83 +323,146 @@ namespace eZDisasm
                     if (instr.IsBranch)
                         knownLabels.Add(instr.BranchTarget);
 
-            foreach (eZ80Disassembler.DisassembledInstruction instr in instrs)
+            StreamsWriter writer = new StreamsWriter();
+            if (writeStdOut)
+                writer.StdOutWriter = Console.Out;
+            if (writeOutputFile)
+                try
+                {
+                    writer.FileWriter = new StreamWriter(outputFileName);
+                }
+                catch
+                {
+                    return ShowShortHelp(ErrorCode.FileOpenError, "Error opening output file " + outputFileName);
+                }
+
+            for (int j = 0; j < instrs.Length; j++)
             {
+                eZ80Disassembler.DisassembledInstruction instr = instrs[j];
                 if (addLabels && knownLabels.Contains(instr.StartPosition + baseAddress))
                 {
                     if (showAddresses)
                         if (useTabs)
-                            Console.Write("\t");
+                            writer.Write("\t");
                         else
-                            Console.Write("        ");
+                            writer.Write("        ");
                     if (showOpcodes)
                         if (useTabs)
-                            Console.Write("\t\t");
+                            writer.Write("\t\t");
                         else
-                            Console.Write("            ");
-                    Console.Write("label_");
+                            writer.Write("            ");
+                    writer.Write("label_");
                     if (z80ClassicMode)
-                        Console.Write(((instr.StartPosition + baseAddress) & 0xFFFF).ToString("X4"));
+                        writer.Write(((instr.StartPosition + baseAddress) & 0xFFFF).ToString("X4"));
                     else
-                        Console.Write((instr.StartPosition + baseAddress).ToString("X6"));
-                    Console.WriteLine(":");
+                        writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                    writer.Write(":");
+                    if (!ircMode)
+                        writer.WriteLine();
+                    else
+                        writer.Write(" \\ ");
                 }
                 if (showAddresses)
                 {
                     if (z80ClassicMode)
-                        Console.Write((instr.StartPosition + baseAddress).ToString("X4"));
+                        writer.Write((instr.StartPosition + baseAddress).ToString("X4"));
                     else
-                        Console.Write((instr.StartPosition + baseAddress).ToString("X6"));
-                    Console.Write(":");
+                        writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                    writer.Write(":");
                     if (useTabs)
-                        Console.Write("\t");
+                        writer.Write("\t");
                     else
                         if (z80ClassicMode)
-                            Console.Write("   ");
+                            writer.Write("   ");
                         else
-                            Console.Write(" ");
+                            writer.Write(" ");
                 }
                 if (showOpcodes)
                 {
                     for (int i = 0; i < instr.Length; i++)
-                        Console.Write(data[instr.StartPosition + i].ToString("X2"));
+                        writer.Write(data[instr.StartPosition + i].ToString("X2"));
                     if (useTabs)
                     {
                         if (instr.Length > 3)
-                            Console.Write("\t");
-                        Console.Write("\t");
+                            writer.Write("\t");
+                        writer.Write("\t");
                     }
                     else
-                        Console.Write(new String(' ', 14 - 2 * instr.Length));
+                        writer.Write(new String(' ', 14 - 2 * instr.Length));
                 }
                 else
-                    if (useTabs)
-                        Console.Write("\t");
-                    else
-                        Console.Write("    ");
-                Console.Write(instr.InstructionName);
-                Console.Write(instr.InstructionSuffix);
+                    if (!ircMode)
+                        if (useTabs)
+                            writer.Write("\t");
+                        else
+                            writer.Write("    ");
+                writer.Write(instr.InstructionName);
+                writer.Write(instr.InstructionSuffix);
                 if (!String.IsNullOrEmpty(instr.InstructionArguments))
                 {
                     if (alignArgs)
                         if (useTabs)
-                            Console.Write("\t");
+                            writer.Write("\t");
                         else
-                            Console.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
+                            writer.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
                     else
-                        Console.Write(" ");
-                    Console.WriteLine(instr.InstructionArguments);
+                        writer.Write(" ");
+                    writer.Write(instr.InstructionArguments);
                 }
-                else
-                    Console.WriteLine();
+                if (j != instrs.Length - 1)
+                    if (!ircMode)
+                        writer.WriteLine();
+                    else
+                        writer.Write(" \\ ");
             }
 
             if (pause)
                 Console.ReadKey();
 
+            writer.Close();
             return (int)ErrorCode.NoError;
         }
 
+        static void WriteOutput(string s)
+        {
+
+        }
+
+        class StreamsWriter
+        {
+            public StreamWriter FileWriter;
+            public TextWriter StdOutWriter;
+
+            public void Write(string str)
+            {
+                if (FileWriter != null)
+                    FileWriter.Write(str);
+                if (StdOutWriter != null)
+                    StdOutWriter.Write(str);
+            }
+
+            public void WriteLine(string str)
+            {
+                if (FileWriter != null)
+                    FileWriter.WriteLine(str);
+                if (StdOutWriter != null)
+                    StdOutWriter.WriteLine(str);
+            }
+
+            public void WriteLine()
+            {
+                if (FileWriter != null)
+                    FileWriter.WriteLine();
+                if (StdOutWriter != null)
+                    StdOutWriter.WriteLine();
+            }
+
+            public void Close()
+            {
+                if (FileWriter != null)
+                    FileWriter.Dispose();
+            }
+        }
 
         static int ShowShortHelp(ErrorCode e, string msg)
         {
