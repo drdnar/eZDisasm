@@ -345,14 +345,17 @@ namespace eZDisasm
                         Console.Write("    ");
                 Console.Write(instr.InstructionName);
                 Console.Write(instr.InstructionSuffix);
-                if (alignArgs)
-                    if (useTabs)
-                        Console.Write("\t");
+                if (!String.IsNullOrEmpty(instr.InstructionArguments))
+                {
+                    if (alignArgs)
+                        if (useTabs)
+                            Console.Write("\t");
+                        else
+                            Console.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
                     else
-                        Console.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
-                else
-                    Console.Write(" ");
-                Console.WriteLine(instr.InstructionArguments);
+                        Console.Write(" ");
+                    Console.WriteLine(instr.InstructionArguments);
+                }
             }
 
 

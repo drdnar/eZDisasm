@@ -356,8 +356,10 @@ namespace eZDisasm
                         if (b == 0x76)
                             CurrentInstruction.InstructionName = "halt";
                         else
+                        {
                             CurrentInstruction.InstructionName = "ld";
                             CurrentInstruction.InstructionArguments = TableR[GetField(Field.y, b)] + ", " + TableR[GetField(Field.z, b)];
+                        }
                         break;
                     case 2:
                         CurrentInstruction.InstructionName = TableAlu[GetField(Field.y, b)];
@@ -557,7 +559,7 @@ namespace eZDisasm
                             else
                             {
                                 CurrentInstruction.InstructionName = "out0";
-                                CurrentInstruction.InstructionArguments = "(" + Data[CurrentByte++].ToString("X2") + ")" + TableR[GetField(Field.y, b)];
+                                CurrentInstruction.InstructionArguments = "(" + Data[CurrentByte++].ToString("X2") + "), " + TableR[GetField(Field.y, b)];
                             }
                             break;
                         case 2:
