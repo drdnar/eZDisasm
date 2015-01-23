@@ -63,7 +63,7 @@ namespace eZDisasm
             #region Parse Arguments
             Queue<ArgumentType> expectedArgs = new Queue<ArgumentType>();
             
-            while ((readInputFile && curArg < args.Length) || (!readInputFile && curArg < args.Length - 1))
+            while (curArg < args.Length)
             {
                 if (args[curArg].Length != 0)
                 {
@@ -94,6 +94,8 @@ namespace eZDisasm
                                 break;
                         }
                     }
+                    else if (curArg == args.Length - 1 && (new Regex("([0-9A-Fa-f]{1,6}:)?([0-9A-Fa-f][0-9A-Fa-f])+")).IsMatch(args[curArg]))
+                        break;
                     else
                     {
                         if (args[curArg][0] == '-')
