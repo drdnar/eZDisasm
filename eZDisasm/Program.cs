@@ -350,6 +350,8 @@ namespace eZDisasm
                         Console.Write("\t");
                     else
                         Console.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
+                else
+                    Console.Write(" ");
                 Console.WriteLine(instr.InstructionArguments);
             }
 
