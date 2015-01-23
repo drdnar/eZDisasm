@@ -349,12 +349,14 @@ namespace eZDisasm
                     if (useTabs)
                         Console.Write("\t");
                     else
-                        Console.Write(new String(' ', 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length));
+                        Console.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
                 Console.WriteLine(instr.InstructionArguments);
             }
 
 
+#if DEBUG
             Console.ReadKey();
+#endif
             return (int)ErrorCode.NoError;
         }
 
@@ -364,7 +366,9 @@ namespace eZDisasm
             Console.WriteLine(msg);
             Console.WriteLine("Usage: eZDisasm [options] [hex string]");
             Console.WriteLine("For help: eZDisasm --help");
+#if DEBUG
             Console.ReadKey();
+#endif
             return (int)e;
         }
 
