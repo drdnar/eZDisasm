@@ -122,7 +122,7 @@ namespace eZDisasm
                                 break;
                         }
                     }
-                    else if (curArg == args.Length - 1 && (new Regex("([0-9A-Fa-f]{1,6}:)?([0-9A-Fa-f][0-9A-Fa-f])+")).IsMatch(args[curArg]))
+                    else if (curArg == args.Length - 1 && Regex.IsMatch(args[curArg], "^([0-9A-Fa-f]{1,6}[\\s\\r\\n\\:\\.]*:)?([\\s\\r\\n\\:\\.]*[0-9A-Fa-f][0-9A-Fa-f])+[\\s\\r\\n\\:\\.]*$"))
                         break;
                     else
                     {
@@ -381,19 +381,19 @@ namespace eZDisasm
 
             if (!binaryInputFile)
             {
-                Regex baseAddressPrefixRegex = new Regex("^\\s*[0-9A-Fa-f]{1,6}\\s*\\:");
-                Regex addressRegex = new Regex("[0-9A-Fa-f]{1,6}");
+                Regex baseAddressPrefixRegex = new Regex("^\\s*[0-9A-Fa-f]{1,6}[\\s\\r\\n\\:\\.]*\\:");
                 if (baseAddressPrefixRegex.IsMatch(inputText))
                 {
                     if (hasBaseAddress)
-                        return ShowShortHelp(ErrorCode.ConflictingArgument, "Input string has base address specifier, which conflicts with -b argument.");
+                        return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Input string has base address specifier, which conflicts with -b argument.");
                     hasBaseAddress = true;
-                    baseAddress = Convert.ToInt32(addressRegex.Match(inputText).Value, 16);
+                    baseAddress = Convert.ToInt32(Regex.Match(inputText, "[0-9A-Fa-f]{1,6}").Value, 16);
                     inputText = baseAddressPrefixRegex.Replace(inputText, "", 1);
                 }
+                if (!Regex.IsMatch(inputText, "^([\\s\\r\\n\\:\\.]*[0-9A-Fa-f][0-9A-Fa-f])+[\\s\\r\\n\\:\\.]*$"))
+                    return ShowShortHelp(ErrorCode.InvalidHexString, "Error: input is not valid hex string");
                 List<byte> bytes = new List<byte>();
-                Regex byteRegex = new Regex("[0-9A-Fa-f][0-9A-Fa-f]");
-                foreach (Match m in byteRegex.Matches(inputText))
+                foreach (Match m in Regex.Matches(inputText, "[0-9A-Fa-f][0-9A-Fa-f]"))
                     bytes.Add(Convert.ToByte(m.Value, 16));
                 data = bytes.ToArray();
             }
