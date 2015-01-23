@@ -2,8 +2,8 @@
 23 January 2015
 
 Usage: eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] <hex string>
- OR    eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -i file.txt
- OR    eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -I file.bin
+  OR   eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -i file.txt
+  OR   eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -I file.bin
 Output disassembly is dumped to stdout.
 
 Options:
@@ -26,6 +26,8 @@ Options:
     Read instructions in binary format from <file>
  -l, --no-labels
     Do not add labels for branches
+ -n, --stdin
+    Read input from stdin
  -O (default), --stdout
     Write output to stdout, not mutually exclusive with -o
  -o <file>, --outfile <file>
@@ -36,7 +38,7 @@ Options:
     Do not align instruction arguments
  -x, --hide-opcodes
     Do not show instruction opcodes
- -P (default)
+ -P, --no-pause (default)
     Do not pause to wait for a key when done
  -p, --pause
     Pause when done

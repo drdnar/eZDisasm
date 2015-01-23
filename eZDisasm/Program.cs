@@ -47,13 +47,17 @@ namespace eZDisasm
         static int Main(string[] args)
         {
 #if WIN_32
+            // Don't call Win32 functions from Mono
             if (Type.GetType("Mono.Runtime") == null)
+                // Are we the only process using this console?
                 switch (GetConsoleProcessList(new uint[] { 0 }, 1))
                 {
                     case 0:
                         Console.WriteLine("Internal error: Could not get console process list.");
                         break;
                     case 1:
+                        // Yes, we are the only process using this console, so
+                        // hold it open when done unless overridden with --no-pause
                         newConsole = pause = true;
                         break;
                     default:
@@ -85,6 +89,7 @@ namespace eZDisasm
             bool forceWriteStdOut = false;
             bool writeStdOut = true;
             bool writeOutputFile = false;
+            bool stdin = false;
             string outputFileName = "";
             bool ircMode = false;
 
@@ -162,6 +167,8 @@ namespace eZDisasm
                                     case "--infile":
                                         if (readInputFile)
                                             return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                        if (stdin)
+                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --infile is mutually exclusive with with --stdin");
                                         readInputFile = true;
                                         binaryInputFile = false;
                                         expectedArgs.Enqueue(ArgumentType.InputFileName);
@@ -169,6 +176,8 @@ namespace eZDisasm
                                     case "--binfile":
                                         if (readInputFile)
                                             return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                        if (stdin)
+                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --binfile is mutually exclusive with with --stdin");
                                         readInputFile = true;
                                         binaryInputFile = true;
                                         expectedArgs.Enqueue(ArgumentType.InputFileName);
@@ -197,8 +206,16 @@ namespace eZDisasm
                                     case "--hide-opcodes":
                                         showOpcodes = false;
                                         break;
+                                    case "--no-pause":
+                                        pause = false;
+                                        break;
                                     case "--pause":
                                         pause = true;
+                                        break;
+                                    case "--stdin":
+                                        if (readInputFile)
+                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
+                                        stdin = true;
                                         break;
                                     default:
                                         return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
@@ -218,6 +235,8 @@ namespace eZDisasm
                                         case 'i':
                                             if (readInputFile)
                                                 return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                            if (stdin)
+                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -i is mutually exclusive with with -n");
                                             readInputFile = true;
                                             binaryInputFile = false;
                                             expectedArgs.Enqueue(ArgumentType.InputFileName);
@@ -225,6 +244,8 @@ namespace eZDisasm
                                         case 'I':
                                             if (readInputFile)
                                                 return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                            if (stdin)
+                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -I is mutually exclusive with with -n");
                                             readInputFile = true;
                                             binaryInputFile = true;
                                             expectedArgs.Enqueue(ArgumentType.InputFileName);
@@ -300,6 +321,11 @@ namespace eZDisasm
                                         case 'C':
                                             ircMode = false;
                                             break;
+                                        case 'n':
+                                            if (readInputFile)
+                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
+                                        stdin = true;
+                                            break;
                                         default:
                                             return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
                                     }
@@ -315,69 +341,39 @@ namespace eZDisasm
             if (expectedArgs.Count > 0)
             {
                 while (expectedArgs.Count > 1)
-                    //Console.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
                     Console.Error.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
                 return ShowShortHelp(ErrorCode.MissingImpliedArgument, "Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
             }
-            /*
-            if (hasBaseAddress)
-                Console.WriteLine("Base address: " + baseAddress.ToString("X"));
-            else
-                Console.WriteLine("No base address.");
-            if (readInputFile)
-                Console.WriteLine("Input file: " + inputFileName);
-            else
-                Console.WriteLine("No input file.");
-            if (binaryInputFile)
-                Console.WriteLine("Binary format file.");
-            if (z80ClassicMode)
-                Console.WriteLine("Z80 classic mode.");
-            else
-                if (adlMode)
-                    Console.WriteLine("eZ80 ADL mode.");
-                else
-                    Console.WriteLine("eZ80 short mode.");
-            if (addLabels)
-                Console.WriteLine("Show labels.");
-            else
-                Console.WriteLine("Do not show labels.");
-            if (showOpcodes)
-                Console.WriteLine("Show opcodes.");
-            else
-                Console.WriteLine("Do not show opcodes.");
-            if (showAddresses)
-                Console.WriteLine("Show addresses.");
-            else
-                Console.WriteLine("Do not show addresses.");
-            if (alignArgs)
-                if (useTabs)
-                    Console.WriteLine("Align args using tabs.");
-                else
-                    Console.WriteLine("Align args using spaces.");
-            else
-                Console.WriteLine("Do not align args.");
-            */
             #endregion
 
             byte[] data = new byte[] {0};
             string inputText = "";
 
-            if (readInputFile)
+            if (stdin)
             {
-                try
-                {
-                    if (binaryInputFile)
-                        data = System.IO.File.ReadAllBytes(inputFileName);
-                    else
-                        inputText = System.IO.File.ReadAllText(inputFileName);
-                }
-                catch
-                {
-                    return ShowShortHelp(ErrorCode.FileOpenError, "Error opening input file " + inputFileName);
-                }
+                StringBuilder b = new StringBuilder();
+                string s;
+                while ((s = Console.ReadLine()) != null)
+                    b.Append(s);
+                inputText = b.ToString();
             }
             else
-                inputText = args[args.Length - 1];
+                if (readInputFile)
+                {
+                    try
+                    {
+                        if (binaryInputFile)
+                            data = System.IO.File.ReadAllBytes(inputFileName);
+                        else
+                            inputText = System.IO.File.ReadAllText(inputFileName);
+                    }
+                    catch
+                    {
+                        return ShowShortHelp(ErrorCode.FileOpenError, "Error opening input file " + inputFileName);
+                    }
+                }
+                else
+                    inputText = args[args.Length - 1];
 
             if (!binaryInputFile)
             {
@@ -397,13 +393,6 @@ namespace eZDisasm
                     bytes.Add(Convert.ToByte(m.Value, 16));
                 data = bytes.ToArray();
             }
-
-            /*Console.Write(baseAddress.ToString("X"));
-            foreach (byte b in data)
-            {
-                Console.Write(":");
-                Console.Write(b.ToString("X2"));
-            }*/
 
             eZ80Disassembler.DisassembledInstruction[] instrs =
                 eZ80Disassembler.Disassemble(data, baseAddress, hasBaseAddress, adlMode, z80ClassicMode, addLabels ? "label_" : "", addLabels ? "loc_" : "");
