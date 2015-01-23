@@ -48,18 +48,19 @@ namespace eZDisasm
         static int Main(string[] args)
         {
 #if WIN_32
-            switch (GetConsoleProcessList(new uint[] { 0 }, 1))
-            {
-                case 0:
-                    Console.WriteLine("Internal error: Could not get console process list.");
-                    break;
-                case 1:
-                    newConsole = pause = true;
-                    break;
-                default:
-                    pause = false;
-                    break;
-            }
+            if (Type.GetType("Mono.Runtime") == null)
+                switch (GetConsoleProcessList(new uint[] { 0 }, 1))
+                {
+                    case 0:
+                        Console.WriteLine("Internal error: Could not get console process list.");
+                        break;
+                    case 1:
+                        newConsole = pause = true;
+                        break;
+                    default:
+                        pause = false;
+                        break;
+                }
 #endif
             // Parse arguments
             if (args.Length == 0)
