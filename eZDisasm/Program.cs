@@ -391,7 +391,7 @@ namespace eZDisasm
                     if (!ircMode)
                         writer.WriteLine();
                     else
-                        writer.Write(" \\ ");
+                        writer.Write(" ");
                 }
                 if (showAddresses)
                 {
