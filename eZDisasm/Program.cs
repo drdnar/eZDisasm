@@ -6,11 +6,28 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+#if WIN_32
+using System.Runtime.InteropServices;
+#endif
+
 
 namespace eZDisasm
 {
     class Program
     {
+#if WIN_32
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int AttachConsole(int dwProcessId);
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int AllocConsole();
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int GetConsoleProcessList(int ptr, int processCount);
+        public const int ATTACH_PARENT_PROCESS = -1;
+        public const int ERROR_ACCESS_DENIED = 5;
+        public const int ERROR_INVALID_HANDLE = 6;
+        public const int ERROR_GEN_FAILURE = 31;
+#endif
+
         enum ArgumentType
         {
             BaseAddress,
@@ -30,8 +47,31 @@ namespace eZDisasm
             FileOpenError,
         }
 
+        static bool pause = false;
+
         static int Main(string[] args)
         {
+#if WIN_32
+            /*switch (AttachConsole(ATTACH_PARENT_PROCESS))
+            {
+                case ERROR_ACCESS_DENIED:
+                    // Already attached to a console, so do nothing
+                    break;
+                case ERROR_INVALID_HANDLE:
+                case ERROR_GEN_FAILURE:
+                default:
+
+                    break;
+            }
+            
+            Console.WriteLine("P: " + pause.ToString());
+            Console.ReadKey();*/
+            AllocConsole();
+            //tPtr[] blah = new IntPtr[] { 0 };
+            Console.WriteLine(GetConsoleProcessList(0, 0));
+            Console.ReadKey();
+#endif
+
             // Parse arguments
             if (args.Length == 0)
             {
@@ -53,7 +93,6 @@ namespace eZDisasm
             bool alignArgs = true;
             bool useTabs = false;
             bool showAddresses = false;
-            bool pause = false;
             bool forceWriteStdOut = false;
             bool writeStdOut = true;
             bool writeOutputFile = false;
@@ -470,6 +509,12 @@ namespace eZDisasm
             Console.WriteLine("For help: eZDisasm --help");
 #if DEBUG
             Console.ReadKey();
+#else
+#if WIN_32
+            if (pause)
+                Console.ReadKey();
+#else
+#endif
 #endif
             return (int)e;
         }
@@ -480,6 +525,15 @@ namespace eZDisasm
             using (Stream stream = assembly.GetManifestResourceStream("eZDisasm.readme.txt"))
                 using (StreamReader reader = new StreamReader(stream))
                     Console.WriteLine(reader.ReadToEnd());
+#if DEBUG
+            Console.ReadKey();
+#else
+#if WIN_32
+            if (pause)
+                Console.ReadKey();
+#else
+#endif
+#endif
         }
     }
 }
