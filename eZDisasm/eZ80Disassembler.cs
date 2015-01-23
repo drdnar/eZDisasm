@@ -831,7 +831,7 @@ namespace eZDisasm
                     switch (b)
                     {
                         case 0xA0:
-                            CurrentInstruction.InstructionName = "ldI";
+                            CurrentInstruction.InstructionName = "ldi";
                             break;
                         case 0xA1:
                             CurrentInstruction.InstructionName = "cpi";
@@ -843,6 +843,8 @@ namespace eZDisasm
                             CurrentInstruction.InstructionName = "outi";
                             break;
                         case 0xA4:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "outi2";
                             break;
                         case 0xA8:
@@ -858,6 +860,8 @@ namespace eZDisasm
                             CurrentInstruction.InstructionName = "outd";
                             break;
                         case 0xAC:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "outd2";
                             break;
                         case 0xB0:
@@ -873,6 +877,8 @@ namespace eZDisasm
                             CurrentInstruction.InstructionName = "otir";
                             break;
                         case 0xB4:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "oti2r";
                             break;
                         case 0xB8:
@@ -888,62 +894,100 @@ namespace eZDisasm
                             CurrentInstruction.InstructionName = "otdr";
                             break;
                         case 0xBC:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otd2r";
                             break;
                         case 0x82:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "inim";
                             break;
                         case 0x83:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otim";
                             break;
                         case 0x84:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ini2";
                             break;
                         case 0x8A:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "indm";
                             break;
                         case 0x8B:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otdm";
                             break;
                         case 0x8C:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ind2";
                             break;
                         case 0x92:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "inimr";
                             break;
                         case 0x93:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otimr";
                             break;
                         case 0x94:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ini2r";
                             break;
                         case 0x9A:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "indmr";
                             break;
                         case 0x9B:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otdmr";
                             break;
                         case 0x9C:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ind2r";
                             break;
                         case 0xC2:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "inirx";
                             break;
                         case 0xC3:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otirx";
                             break;
                         case 0xC7:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ld";
                             CurrentInstruction.InstructionArguments = "i, hl";
                             break;
                         case 0xD7:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "ld";
                             CurrentInstruction.InstructionArguments = "hl, i";
                             break;
                         case 0xCA:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "indrx";
                             break;
                         case 0xCB:
+                            if (Z80PlainMode)
+                                goto default;
                             CurrentInstruction.InstructionName = "otdrx";
                             break;
                         default:
