@@ -92,6 +92,7 @@ namespace eZDisasm
             bool stdin = false;
             string outputFileName = "";
             bool ircMode = false;
+            bool append = true;
 
             #region Parse Arguments
             Queue<ArgumentType> expectedArgs = new Queue<ArgumentType>();
@@ -217,6 +218,12 @@ namespace eZDisasm
                                             return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
                                         stdin = true;
                                         break;
+                                    case "--append":
+                                        append = true;
+                                        break;
+                                    case "--no-append":
+                                        append = false;
+                                        break;
                                     default:
                                         return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
                                 }
@@ -324,7 +331,13 @@ namespace eZDisasm
                                         case 'n':
                                             if (readInputFile)
                                             return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
-                                        stdin = true;
+                                            stdin = true;
+                                            break;
+                                        case 'z':
+                                            append = false;
+                                            break;
+                                        case 'Z':
+                                            append = true;
                                             break;
                                         default:
                                             return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
@@ -410,7 +423,7 @@ namespace eZDisasm
             if (writeOutputFile)
                 try
                 {
-                    writer.FileWriter = new StreamWriter(outputFileName);
+                    writer.FileWriter = new StreamWriter(outputFileName, append);
                 }
                 catch
                 {

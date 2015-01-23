@@ -32,13 +32,15 @@ Options:
     Write output to stdout, not mutually exclusive with -o
  -o <file>, --outfile <file>
     Write output to <file> instead of stdout.
+ -P, --no-pause (default)
+    Do not pause to wait for a key when done
+ -p, --pause
+    Pause when done
  -s, --pad-tabs
     Use tabs for column alignment instead of spaces
  -t, --no-align
     Do not align instruction arguments
  -x, --hide-opcodes
     Do not show instruction opcodes
- -P, --no-pause (default)
-    Do not pause to wait for a key when done
- -p, --pause
-    Pause when done
+ -z, --no-append
+    Do not append to outfile; instead overwrite it
