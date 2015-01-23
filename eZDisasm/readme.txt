@@ -1,9 +1,9 @@
 ﻿eZ80 Disassembler
 23 January 2015
 
-Usage: eZDisasm [-eEaAlLxXtTsS] [-b <baseAddress>] [-o <outfile>] <hex string>
- OR    eZDisasm [-eEaAlLxXtTsS] [-b <baseAddress>] [-o <outfile>] -i file.txt
- OR    eZDisasm [-eEaAlLxXtTsS] [-b <baseAddress>] [-o <outfile>] -I file.bin
+Usage: eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] <hex string>
+ OR    eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] -i file.txt
+ OR    eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] -I file.bin
 Output disassembly is dumped to stdout.
 
 Options:
@@ -21,8 +21,8 @@ Options:
  -I <file>: Read instructions in binary format from <file>
  -L (default): Add labels when possible for branches
  -l: Do not add labels for branches
- -O <file>: Write output to <file> instead of stdout.
- -o (default): Write output to stdout, not mutually exclusive with -o
+ -O (default): Write output to stdout, not mutually exclusive with -o
+ -o <file>: Write output to <file> instead of stdout.
  -S (default): Use spaces for column alignment
  -s: Use tabs for column alignment
  -T (default): Align instruction arguments with whitespace
