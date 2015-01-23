@@ -90,7 +90,7 @@ namespace eZDisasm
                         {
                             if (args[curArg].Length == 1)
                             {
-                                return ShowShortHelp(ErrorCode.BadArgument, "Error: Bare - without");
+                                return ShowShortHelp(ErrorCode.BadArgument, "Error: Bare - without option character");
                             }
                             if (args[curArg][1] == '-')
                             {
