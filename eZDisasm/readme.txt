@@ -1,9 +1,9 @@
 ﻿eZ80 Disassembler
 23 January 2015
 
-Usage: eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] <hex string>
- OR    eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] -i file.txt
- OR    eZDisasm [-acdelstxp] [-b <baseAddress>] [-o <outfile>] -I file.bin
+Usage: eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] <hex string>
+ OR    eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -i file.txt
+ OR    eZDisasm [-acdelstxOp] [-b <baseAddress>] [-o <outfile>] -I file.bin
 Output disassembly is dumped to stdout.
 
 Options:

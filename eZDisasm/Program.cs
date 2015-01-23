@@ -224,7 +224,8 @@ namespace eZDisasm
             if (expectedArgs.Count > 0)
             {
                 while (expectedArgs.Count > 1)
-                    Console.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
+                    //Console.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
+                    Console.Error.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
                 return ShowShortHelp(ErrorCode.MissingImpliedArgument, "Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
             }
             /*
@@ -423,11 +424,6 @@ namespace eZDisasm
             return (int)ErrorCode.NoError;
         }
 
-        static void WriteOutput(string s)
-        {
-
-        }
-
         class StreamsWriter
         {
             public StreamWriter FileWriter;
@@ -466,8 +462,9 @@ namespace eZDisasm
 
         static int ShowShortHelp(ErrorCode e, string msg)
         {
-            Console.WriteLine(msg);
-            Console.WriteLine("Usage: eZDisasm [options] [hex string]");
+            //Console.WriteLine(msg);
+            Console.Error.WriteLine(msg);
+            Console.WriteLine("Usage: eZDisasm [-acdelstxOp] [-b <base>] [-o <outfile>] {-i/I <infile> | <hex>}");
             Console.WriteLine("For help: eZDisasm --help");
 #if DEBUG
             Console.ReadKey();
