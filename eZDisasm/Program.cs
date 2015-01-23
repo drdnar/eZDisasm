@@ -6,11 +6,20 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+#if WIN_32
+
+using System.Runtime.InteropServices;
+#endif
 
 namespace eZDisasm
 {
     class Program
     {
+#if WIN_32
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern uint GetConsoleProcessList(uint[] ProcessList, uint ProcessCount);
+#endif
         enum ArgumentType
         {
             BaseAddress,
@@ -30,8 +39,28 @@ namespace eZDisasm
             FileOpenError,
         }
 
+        static bool pause = false;
+
+#if WIN_32
+        static bool newConsole = false;
+#endif
+
         static int Main(string[] args)
         {
+#if WIN_32
+            switch (GetConsoleProcessList(new uint[] { 0 }, 1))
+            {
+                case 0:
+                    Console.WriteLine("Internal error: Could not get console process list.");
+                    break;
+                case 1:
+                    newConsole = pause = true;
+                    break;
+                default:
+                    pause = false;
+                    break;
+            }
+#endif
             // Parse arguments
             if (args.Length == 0)
             {
@@ -53,7 +82,6 @@ namespace eZDisasm
             bool alignArgs = true;
             bool useTabs = false;
             bool showAddresses = false;
-            bool pause = false;
             bool forceWriteStdOut = false;
             bool writeStdOut = true;
             bool writeOutputFile = false;
@@ -462,24 +490,60 @@ namespace eZDisasm
             }
         }
 
+#if WIN_32
+        static void ShowDummyHelp()
+        {
+            Console.WriteLine("eZDisasm, an eZ80 and classic Z80 disassembler");
+            Console.WriteLine();
+            Console.WriteLine("This is a command-line application.  You must run it from the command line.");
+            Console.WriteLine("It is not an interactive application.");
+            Console.WriteLine("For syntaxic help:");
+            Console.WriteLine("    eZDisasm --help");
+        }
+#endif
+
         static int ShowShortHelp(ErrorCode e, string msg)
         {
+#if WIN_32
+            if (newConsole && pause)
+            {
+                ShowDummyHelp();
+                Console.WriteLine();
+                Console.Write("Message: ");
+                Console.Error.WriteLine(msg);
+                Console.ReadKey();
+                return (int)e;
+            }
+#endif
             //Console.WriteLine(msg);
             Console.Error.WriteLine(msg);
             Console.WriteLine("Usage: eZDisasm [-acdelstxOp] [-b <base>] [-o <outfile>] {-i/I <infile> | <hex>}");
             Console.WriteLine("For help: eZDisasm --help");
 #if DEBUG
             Console.ReadKey();
+#else
+            if (pause)
+                Console.ReadKey();
 #endif
             return (int)e;
         }
 
         static void ShowHelp()
         {
+#if WIN_32
+            if (newConsole && pause)
+            {
+                ShowDummyHelp();
+                Console.ReadKey();
+                return;
+            }
+#endif            
             Assembly assembly = Assembly.GetExecutingAssembly();
             using (Stream stream = assembly.GetManifestResourceStream("eZDisasm.readme.txt"))
                 using (StreamReader reader = new StreamReader(stream))
                     Console.WriteLine(reader.ReadToEnd());
+            if (pause)
+                Console.ReadKey();
         }
     }
 }
