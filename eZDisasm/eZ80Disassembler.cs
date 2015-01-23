@@ -1116,38 +1116,38 @@ namespace eZDisasm
                                 CurrentInstruction.InstructionName = TableRot[GetField(Field.y, b)];
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = TableRot[GetField(Field.y, b)] + "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                    CurrentInstruction.InstructionArguments = TableRot[GetField(Field.y, b)] + "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                 break;
                             case 1:
                                 CurrentInstruction.InstructionName = "bit";
                                 if (GetField(Field.z, b) != 6 && !Z80PlainMode)
                                     CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                 break;
                             case 2:
                                 CurrentInstruction.InstructionName = "res";
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                 break;
                             case 3:
                                 CurrentInstruction.InstructionName = "set";
                                 if (GetField(Field.z, b) != 6)
                                     if (Z80PlainMode)
-                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.z, b)] + ", " + GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                     else
                                         CurrentInstruction.InstructionName = "OPCODETRAP";
                                 else
-                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                                    CurrentInstruction.InstructionArguments = GetField(Field.y, b).ToString() + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte - 1]) + ")";
                                 break;
                         }
                         CurrentByte++;
