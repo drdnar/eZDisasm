@@ -7,7 +7,6 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 #if WIN_32
-
 using System.Runtime.InteropServices;
 #endif
 
@@ -140,6 +139,67 @@ namespace eZDisasm
                                     case "--help":
                                         ShowHelp();
                                         return (int)ErrorCode.NoError;
+                                    case "--short-mode":
+                                        adlMode = false;
+                                        break;
+                                    case "--base-address":
+                                        if (hasBaseAddress)
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate base address specifier");
+                                            hasBaseAddress = true;
+                                            expectedArgs.Enqueue(ArgumentType.BaseAddress);
+                                        break;
+                                    case "--eZ80":
+                                    case "--ez80":
+                                    case "--Ez80": // I hate you if you use these.
+                                    case "--EZ80":
+                                        z80ClassicMode = false;
+                                        break;
+                                    case "--Z80":
+                                    case "--z80":
+                                        adlMode = false;
+                                        z80ClassicMode = true;
+                                        break;
+                                    case "--infile":
+                                        if (readInputFile)
+                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                        readInputFile = true;
+                                        binaryInputFile = false;
+                                        expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                        break;
+                                    case "--binfile":
+                                        if (readInputFile)
+                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                                        readInputFile = true;
+                                        binaryInputFile = true;
+                                        expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                        break;
+                                    case "--no-labels":
+                                        addLabels = false;
+                                        break;
+                                    case "--stdout":
+                                        writeStdOut = true;
+                                        forceWriteStdOut = true;
+                                        break;
+                                    case "--outfile":
+                                        if (writeOutputFile)
+                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate outfile specifier");
+                                        expectedArgs.Enqueue(ArgumentType.OutputFileName);
+                                        writeOutputFile = true;
+                                        if (!forceWriteStdOut)
+                                            writeStdOut = false;
+                                        break;
+                                    case "--pad-tabs":
+                                        useTabs = true;
+                                        break;
+                                    case "--no-align":
+                                        alignArgs = false;
+                                        break;
+                                    case "--hide-opcodes":
+                                        showOpcodes = false;
+                                        break;
+                                    case "--pause":
+                                        pause = true;
+                                        break;
                                     default:
                                         return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
                                 }
@@ -151,20 +211,20 @@ namespace eZDisasm
                                     {
                                         case 'b':
                                             if (hasBaseAddress)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate -b argument");
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate base address specifier");
                                             hasBaseAddress = true;
                                             expectedArgs.Enqueue(ArgumentType.BaseAddress);
                                             break;
                                         case 'i':
                                             if (readInputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate -i/-I argument");
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
                                             readInputFile = true;
                                             binaryInputFile = false;
                                             expectedArgs.Enqueue(ArgumentType.InputFileName);
                                             break;
                                         case 'I':
                                             if (readInputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate -i/-I argument");
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
                                             readInputFile = true;
                                             binaryInputFile = true;
                                             expectedArgs.Enqueue(ArgumentType.InputFileName);
@@ -180,7 +240,7 @@ namespace eZDisasm
                                             break;
                                         case 'A':
                                             if (z80ClassicMode)
-                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -a is mutually exclusive with -E");
+                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -A is mutually exclusive with -e");
                                             adlMode = true;
                                             break;
                                         case 'a':
@@ -224,7 +284,7 @@ namespace eZDisasm
                                             break;
                                         case 'o':
                                             if (writeOutputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate -o argument");
+                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate outfile specifier");
                                             expectedArgs.Enqueue(ArgumentType.OutputFileName);
                                             writeOutputFile = true;
                                             if (!forceWriteStdOut)
@@ -415,7 +475,7 @@ namespace eZDisasm
                         writer.Write(data[instr.StartPosition + i].ToString("X2"));
                     if (useTabs)
                     {
-                        if (instr.Length > 3)
+                        if (instr.Length <= 3)
                             writer.Write("\t");
                         writer.Write("\t");
                     }
