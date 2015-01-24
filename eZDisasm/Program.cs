@@ -11,6 +11,11 @@ using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 #endif
 
+// Could be useful to add an option for reading from stdin.
+// Also, a way to only read from part of a .bin.
+// And a way to specify append, not overwrite, for outfile.
+// Also support --argname in addition to single-char switches.
+
 namespace eZDisasm
 {
     class Program
