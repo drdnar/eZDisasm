@@ -158,7 +158,7 @@ namespace eZDisasm
                                         break;
                                     case 1:
                                         CurrentInstruction.InstructionName = "ex";
-                                        CurrentInstruction.InstructionArguments = "ex, ex'";
+                                        CurrentInstruction.InstructionArguments = "af, af'";
                                         break;
                                     case 2:
                                         branchTarget = (sbyte)Data[CurrentByte++];
