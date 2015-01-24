@@ -438,6 +438,10 @@ namespace eZDisasm
                     return ShowShortHelp(ErrorCode.FileOpenError, "Error opening output file " + outputFileName);
                 }
 
+
+            int addrColWidth = 14;
+            int opcodeColWidth = 16;
+            int instrColWidth = 8;
             for (int j = 0; j < instrs.Length; j++)
             {
                 eZ80Disassembler.DisassembledInstruction instr = instrs[j];
