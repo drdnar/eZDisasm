@@ -224,6 +224,9 @@ namespace eZDisasm
                                     case "--no-append":
                                         append = false;
                                         break;
+                                    case "--irc-mode":
+                                        ircMode = true;
+                                        break;
                                     default:
                                         return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
                                 }
