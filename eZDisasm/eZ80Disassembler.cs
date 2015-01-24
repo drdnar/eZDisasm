@@ -482,13 +482,13 @@ namespace eZDisasm
                                                     + branchTarget.ToString(WordDataFormatString);
                                                 break;
                                             case 0xDD:
-                                                DoIndexPrefix("ix");
+                                                DoIndexPrefix("ix", 0);
                                                 break;
                                             case 0xED:
                                                 DoEDPrefix();
                                                 break;
                                             case 0xFD:
-                                                DoIndexPrefix("iy");
+                                                DoIndexPrefix("iy", 1);
                                                 break;
                                         }
                                         break;
@@ -1000,7 +1000,7 @@ namespace eZDisasm
                     break;
             }
         }
-        private void DoIndexPrefix(string indexRegister)
+        private void DoIndexPrefix(string indexRegister, int indexRegNumber)
         {
             unchecked
             {
@@ -1200,6 +1200,46 @@ namespace eZDisasm
                         CurrentInstruction.InstructionName = "ld";
                         CurrentInstruction.InstructionArguments = "sp, " + indexRegister;
                         break;
+                    case 0x07:
+                    case 0x17:
+                    case 0x27:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = TableRP[GetField(Field.p, b)] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                        break;
+                    case 0x37:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = indexRegister + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                        break;
+                    case 0x0F:
+                    case 0x1F:
+                    case 0x2F:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + TableRP[GetField(Field.p, b)];
+                        break;
+                    case 0x3F:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + indexRegister;
+                        break;
+                    case 0x31:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = TableIndex[indexRegNumber ^ 1] + ", (" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + ")";
+                        break;
+                    case 0x3E:
+                        if (Z80PlainMode)
+                            goto default;
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + TableIndex[indexRegNumber ^ 1];
+                        break;
                     // No case ED; index registers forbidden on ED block.
                     // No case DD or FD: Only last prefix matters.
                     default:
@@ -1225,6 +1265,12 @@ namespace eZDisasm
             "l",
             "(hl)",
             "a",
+        };
+
+        private static readonly string[] TableIndex = new string[]
+        {
+            "ix",
+            "iy",
         };
 
         private static readonly string[] TableRP = new string[]

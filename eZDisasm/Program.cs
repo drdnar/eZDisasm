@@ -220,7 +220,7 @@ namespace eZDisasm
                                         break;
                                     case "--stdin":
                                         if (readInputFile)
-                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
+                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfile");
                                         stdin = true;
                                         break;
                                     case "--append":
