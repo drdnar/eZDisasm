@@ -84,7 +84,7 @@ namespace eZDisasm
             // Parse arguments
             if (args.Length == 0)
             {
-                ShowHelp();
+                ShowHelp(false);
                 return (int)ErrorCode.NoArguments;
             }
 
@@ -276,7 +276,7 @@ namespace eZDisasm
                                 switch (args[curArg])
                                 {
                                     case "--help":
-                                        ShowHelp();
+                                        ShowHelp(true);
                                         break;
                                     case "--short-mode":
                                         setShortMode();
@@ -341,6 +341,9 @@ namespace eZDisasm
                                         break;
                                     case "--to":
                                         setEndAddr();
+                                        break;
+                                    case "--show-addresses":
+                                        setShowAddresses();
                                         break;
                                     default:
                                         ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
@@ -555,13 +558,13 @@ namespace eZDisasm
                             if (useTabs)
                                 writer.Write("\t");
                             else
-                                for (int c = 0; c < addrColWidth; c++)
+                                for (int c = 0; c < addrColWidth - 2; c++)
                                     writer.Write(" ");
                         if (showOpcodes)
                             if (useTabs)
                                 writer.Write("\t\t");
                             else
-                                for (int c = 0; c < opcodeColWidth; c++)
+                                for (int c = 0; c < opcodeColWidth - (showAddresses ? 0 : 2) ; c++)
                                     writer.Write(" ");
                         writer.Write("label_");
                         if (z80ClassicMode)
@@ -633,7 +636,7 @@ namespace eZDisasm
             }
             else
             {
-                int addr = start;
+                /*int addr = start;
                 while (addr++ < end)
                 {
                     if (showAddresses)
@@ -660,7 +663,7 @@ namespace eZDisasm
                                 writer.Write("\t");
                             else
                                 writer.Write("    ");
-                }    
+                }    */
             }
             
             if (pause)
@@ -744,14 +747,14 @@ namespace eZDisasm
             Environment.Exit((int)e);
         }
 
-        static void ShowHelp()
+        static void ShowHelp(bool forceshow)
         {
 #if WIN_32
-            if (newConsole && pause)
+            if (!forceshow && newConsole && pause)
             {
                 ShowDummyHelp();
                 Console.ReadKey();
-                return;
+                Environment.Exit((int)ErrorCode.NoError);
             }
 #endif            
             Assembly assembly = Assembly.GetExecutingAssembly();

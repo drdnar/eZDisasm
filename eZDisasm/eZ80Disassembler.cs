@@ -336,18 +336,18 @@ namespace eZDisasm
                             else if (b == 0x49)
                             {
                                 CurrentPrefix = AddressingModePrefix.Sil;
-                                CurrentInstruction.InstructionSuffix = ".sil";
+                                CurrentInstruction.InstructionSuffix = ".lis";
                                 LongData = true;
-                                WordDataFormatString = Format3Byte;
+                                WordDataFormatString = Format2Byte;
                                 DisassembleInstruction();
                                 return;
                             }
                             else if (b == 0x52)
                             {
                                 CurrentPrefix = AddressingModePrefix.Lis;
-                                CurrentInstruction.InstructionSuffix = ".lis";
+                                CurrentInstruction.InstructionSuffix = ".sil";
                                 LongData = false;
-                                WordDataFormatString = Format2Byte;
+                                WordDataFormatString = Format3Byte;
                                 DisassembleInstruction();
                                 return;
                             }
