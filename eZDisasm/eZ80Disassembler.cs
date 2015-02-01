@@ -594,7 +594,7 @@ namespace eZDisasm
                                         tempstr = indexreg;
                                         break;
                                 }
-                                CurrentInstruction.InstructionArguments = tempstr + ", " + indexreg + " + " + ((sbyte)Data[CurrentByte++]).ToString("X2");
+                                CurrentInstruction.InstructionArguments = tempstr + ", " + indexreg + " + " + SignedByte((sbyte)Data[CurrentByte++]);
                             }
                             else
                                 CurrentInstruction.InstructionName = "OPCODETRAP";
