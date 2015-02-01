@@ -27,8 +27,19 @@ namespace eZDisasm
         enum ArgumentType
         {
             BaseAddress,
+            InputFile,
+            BinaryInputFile,
+            OutputFile,
+
+        }
+        
+        enum StringArgumentType
+        {
+            BaseAddress,
             InputFileName,
             OutputFileName,
+            StartAddress,
+            EndAddress,
         }
 
         enum ErrorCode
@@ -98,40 +109,157 @@ namespace eZDisasm
             string outputFileName = "";
             bool ircMode = false;
             bool append = true;
-
-            #region Parse Arguments
-            Queue<ArgumentType> expectedArgs = new Queue<ArgumentType>();
+            int start = 0;
+            int end = 0;
+            bool dumpMode = false;
+            bool hexMode = true;
+            bool wordMode = false;
             
+            #region Parse Arguments
+            Queue<StringArgumentType> expectedArgs = new Queue<StringArgumentType>();
+
+            Action seteZ80Mode = () => z80ClassicMode = false;
+            Action setZ80Mode = () => { z80ClassicMode = true; adlMode = false; };
+            Action setShortMode = () => adlMode = false;
+            Action setShowLabels = () => addLabels = true;
+            Action unsetShowLabels = () => addLabels = false;
+            Action setAlignArgs = () => alignArgs = true;
+            Action unsetAlignArgs = () => alignArgs = false;
+            Action setUseTabs = () => useTabs = true;
+            Action unsetUseTabs = () => useTabs = false;
+            Action setIrcMode = () => ircMode = true;
+            Action unsetIrcMode = () => ircMode = false;
+            Action setStdIn = () => stdin = true;
+            Action setWriteStdOut = () => writeStdOut = forceWriteStdOut = true;
+            Action setShowAddresses = () => showAddresses = true;
+            Action unsetShowAddresses = () => showAddresses = false;
+            Action setShowOpcodes = () => showOpcodes = true;
+            Action unsetShowOpcodes = () => showOpcodes = false;
+            Action setPause = () => pause = true;
+            Action unsetPause = () => pause = false;
+            Action setAppend = () => append = true;
+            Action unsetAppend = () => append = false;
+            Action setLongMode = () =>
+                {
+                    if (z80ClassicMode)
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -A is mutually exclusive with -e");
+                    adlMode = true;
+                };
+            Action setWriteOutFile = () =>
+                {
+                    if (writeOutputFile)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate outfile specifier");
+                    if (!forceWriteStdOut)
+                        writeStdOut = false;
+                    writeOutputFile = true;
+                    expectedArgs.Enqueue(StringArgumentType.OutputFileName);
+                };
+            Action setBaseAddress = () =>
+                {
+                    if (hasBaseAddress)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate base address specifier");
+                    hasBaseAddress = true;
+                    expectedArgs.Enqueue(StringArgumentType.BaseAddress);
+                };
+            Action setReadFile = () =>
+                {
+                    if (readInputFile)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                    if (stdin)
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -i is mutually exclusive with with -n");
+                    readInputFile = true;
+                    binaryInputFile = false;
+                    expectedArgs.Enqueue(StringArgumentType.InputFileName);
+                };
+            Action setBinFile = () =>
+                {
+                    if (readInputFile)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
+                    if (stdin)
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -I is mutually exclusive with with -n");
+                    readInputFile = true;
+                    binaryInputFile = true;
+                    expectedArgs.Enqueue(StringArgumentType.InputFileName);
+                };
+            Action setStartAddr = () =>
+                {
+                    if (start != 0)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate start address");
+                    expectedArgs.Enqueue(StringArgumentType.StartAddress);
+                };
+            Action setEndAddr = () =>
+                {
+                    if (end != 0)
+                        ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate end address");
+                    expectedArgs.Enqueue(StringArgumentType.EndAddress);
+                };
+            Action setHexMode = () =>
+                {
+                    if (wordMode)
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Byte hex mode is mutually exclusive with word hex mode");
+                    if (dumpMode)
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Hex mode is mutually exclusive with ASCII mode");
+                    dumpMode = true;
+                    wordMode = false;
+                    hexMode = true;
+                };
+            Action setWordMode = () =>
+                {
+                    if (dumpMode)
+                        if (hexMode && !wordMode)
+                            ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Byte hex mode is mutually exclusive with word hex mode");
+                        else if (!hexMode)
+                            ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Word hex mode is mutually exclusive with ASCII mode");
+                    dumpMode = true;
+                    wordMode = true;
+                    hexMode = true;
+                };
+            Action setAsciiMode = () =>
+                {
+                    if (dumpMode)
+                        if (hexMode)
+                            ShowShortHelp(ErrorCode.ConflictingArgument, "Error: ASCII mode is mutually exclusive with hex mode");
+                    dumpMode = true;
+                    hexMode = false;
+                    wordMode = false;
+                };
+
             while (curArg < args.Length)
             {
                 if (args[curArg].Length != 0)
                 {
                     if (expectedArgs.Count() > 0)
                     {
-                        switch (expectedArgs.Dequeue())
+                        try
                         {
-                            case ArgumentType.BaseAddress:
-                                try
-                                {
+                            switch (expectedArgs.Dequeue())
+                            {
+                                case StringArgumentType.BaseAddress:
                                     baseAddress = Convert.ToInt32(args[curArg], 16);
-                                }
-                                catch (FormatException)
-                                {
-                                    return ShowShortHelp(ErrorCode.BadArgument, "Error: Invalid number " + args[curArg]);
-                                }
-                                catch (OverflowException)
-                                {
-                                    return ShowShortHelp(ErrorCode.BadArgument, "Error: Invalid number " + args[curArg]);
-                                }
-                                curArg++;
-                                break;
-                            case ArgumentType.InputFileName:
-                                inputFileName = args[curArg++];
-                                break;
-                            case ArgumentType.OutputFileName:
-                                outputFileName = args[curArg++];
-                                break;
+                                    break;
+                                case StringArgumentType.InputFileName:
+                                    inputFileName = args[curArg];
+                                    break;
+                                case StringArgumentType.OutputFileName:
+                                    outputFileName = args[curArg];
+                                    break;
+                                case StringArgumentType.StartAddress:
+                                    start = Convert.ToInt32(args[curArg], 16);
+                                    break;
+                                case StringArgumentType.EndAddress:
+                                    end = Convert.ToInt32(args[curArg], 16);
+                                    break;
+                            }
                         }
+                        catch (FormatException)
+                        {
+                            ShowShortHelp(ErrorCode.BadArgument, "Error: Invalid number " + args[curArg]);
+                        }
+                        catch (OverflowException)
+                        {
+                            ShowShortHelp(ErrorCode.BadArgument, "Error: Invalid number " + args[curArg]);
+                        }
+                        curArg++;
                     }
                     else if (curArg == args.Length - 1 && Regex.IsMatch(args[curArg], "^([0-9A-Fa-f]{1,6}[\\s\\r\\n\\:\\.]*:)?([\\s\\r\\n\\:\\.]*[0-9A-Fa-f][0-9A-Fa-f])+[\\s\\r\\n\\:\\.]*$"))
                         break;
@@ -141,7 +269,7 @@ namespace eZDisasm
                         {
                             if (args[curArg].Length == 1)
                             {
-                                return ShowShortHelp(ErrorCode.BadArgument, "Error: Bare - without option character");
+                                ShowShortHelp(ErrorCode.BadArgument, "Error: Bare - without option character");
                             }
                             if (args[curArg][1] == '-')
                             {
@@ -149,91 +277,74 @@ namespace eZDisasm
                                 {
                                     case "--help":
                                         ShowHelp();
-                                        return (int)ErrorCode.NoError;
+                                        break;
                                     case "--short-mode":
-                                        adlMode = false;
+                                        setShortMode();
                                         break;
                                     case "--base-address":
-                                        if (hasBaseAddress)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate base address specifier");
-                                            hasBaseAddress = true;
-                                            expectedArgs.Enqueue(ArgumentType.BaseAddress);
+                                        setBaseAddress();
                                         break;
                                     case "--eZ80":
                                     case "--ez80":
                                     case "--Ez80": // I hate you if you use these.
                                     case "--EZ80":
-                                        z80ClassicMode = false;
+                                        seteZ80Mode();
                                         break;
                                     case "--Z80":
                                     case "--z80":
-                                        adlMode = false;
-                                        z80ClassicMode = true;
+                                        setZ80Mode();
                                         break;
                                     case "--infile":
-                                        if (readInputFile)
-                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
-                                        if (stdin)
-                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --infile is mutually exclusive with with --stdin");
-                                        readInputFile = true;
-                                        binaryInputFile = false;
-                                        expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                        setReadFile();
                                         break;
                                     case "--binfile":
-                                        if (readInputFile)
-                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
-                                        if (stdin)
-                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --binfile is mutually exclusive with with --stdin");
-                                        readInputFile = true;
-                                        binaryInputFile = true;
-                                        expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                        setBinFile();
                                         break;
                                     case "--no-labels":
-                                        addLabels = false;
+                                        unsetShowLabels();
                                         break;
                                     case "--stdout":
-                                        writeStdOut = true;
-                                        forceWriteStdOut = true;
+                                        setWriteStdOut();
                                         break;
                                     case "--outfile":
-                                        if (writeOutputFile)
-                                            return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate outfile specifier");
-                                        expectedArgs.Enqueue(ArgumentType.OutputFileName);
-                                        writeOutputFile = true;
-                                        if (!forceWriteStdOut)
-                                            writeStdOut = false;
+                                        setWriteOutFile();
                                         break;
                                     case "--pad-tabs":
-                                        useTabs = true;
+                                        setUseTabs();
                                         break;
                                     case "--no-align":
-                                        alignArgs = false;
+                                        unsetAlignArgs();
                                         break;
                                     case "--hide-opcodes":
-                                        showOpcodes = false;
+                                        setShowOpcodes();
                                         break;
                                     case "--no-pause":
-                                        pause = false;
+                                        unsetPause();
                                         break;
                                     case "--pause":
-                                        pause = true;
+                                        setPause();
                                         break;
                                     case "--stdin":
-                                        if (readInputFile)
-                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfile");
-                                        stdin = true;
+                                        setStdIn();
                                         break;
                                     case "--append":
-                                        append = true;
+                                        setAppend();
                                         break;
                                     case "--no-append":
-                                        append = false;
+                                        unsetAppend();
                                         break;
                                     case "--irc-mode":
-                                        ircMode = true;
+                                        setIrcMode();
+                                        break;
+                                    case "--from":
+                                        setStartAddr();
+                                        break;
+                                    case "--to":
+                                        setEndAddr();
                                         break;
                                     default:
-                                        return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
+                                        ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
+                                        return (int)ErrorCode.BadArgument;
                                 }
                             }
                             else
@@ -242,118 +353,97 @@ namespace eZDisasm
                                     switch (args[curArg][i])
                                     {
                                         case 'b':
-                                            if (hasBaseAddress)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate base address specifier");
-                                            hasBaseAddress = true;
-                                            expectedArgs.Enqueue(ArgumentType.BaseAddress);
+                                            setBaseAddress();
                                             break;
                                         case 'i':
-                                            if (readInputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
-                                            if (stdin)
-                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -i is mutually exclusive with with -n");
-                                            readInputFile = true;
-                                            binaryInputFile = false;
-                                            expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                            setReadFile();
                                             break;
                                         case 'I':
-                                            if (readInputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate infile specifier");
-                                            if (stdin)
-                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -I is mutually exclusive with with -n");
-                                            readInputFile = true;
-                                            binaryInputFile = true;
-                                            expectedArgs.Enqueue(ArgumentType.InputFileName);
+                                            setBinFile();
                                             break;
                                         case 'E':
-                                            z80ClassicMode = false;
+                                            seteZ80Mode();
                                             break;
                                         case 'e':
-                                            /*if (adlMode)
-                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -a is mutually exclusive with -E");*/
-                                            adlMode = false;
-                                            z80ClassicMode = true;
+                                            setZ80Mode();    
                                             break;
                                         case 'A':
-                                            if (z80ClassicMode)
-                                                return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: -A is mutually exclusive with -e");
-                                            adlMode = true;
+                                            setLongMode();
                                             break;
                                         case 'a':
-                                            adlMode = false;
+                                            setShortMode();
                                             break;
                                         case 'L':
-                                            addLabels = true;
+                                            setShowLabels();
                                             break;
                                         case 'l':
-                                            addLabels = false;
+                                            unsetShowLabels();
                                             break;
                                         case 'X':
-                                            showOpcodes = true;
+                                            setShowOpcodes();
                                             break;
                                         case 'x':
-                                            showOpcodes = false;
+                                            unsetShowLabels();
                                             break;
                                         case 'T':
-                                            alignArgs = true;
+                                            setAlignArgs();
                                             break;
                                         case 't':
-                                            alignArgs = false;
+                                            unsetAlignArgs();
                                             break;
                                         case 'S':
-                                            useTabs = false;
+                                            unsetUseTabs();
                                             break;
                                         case 's':
-                                            useTabs = true;
+                                            setUseTabs();
                                             break;
                                         case 'D':
-                                            showAddresses = false;
+                                            unsetShowAddresses();
                                             break;
                                         case 'd':
-                                            showAddresses = true;
+                                            setShowAddresses();
                                             break;
                                         case 'P':
-                                            pause = false;
+                                            unsetPause();
                                             break;
                                         case 'p':
-                                            pause = true;
+                                            setPause();
                                             break;
                                         case 'o':
-                                            if (writeOutputFile)
-                                                return ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate outfile specifier");
-                                            expectedArgs.Enqueue(ArgumentType.OutputFileName);
-                                            writeOutputFile = true;
-                                            if (!forceWriteStdOut)
-                                                writeStdOut = false;
+                                            setWriteOutFile();
                                             break;
                                         case 'O':
-                                            writeStdOut = true;
-                                            forceWriteStdOut = true;
+                                            setWriteStdOut();
                                             break;
                                         case 'c':
-                                            ircMode = true;
+                                            setIrcMode();
                                             break;
                                         case 'C':
-                                            ircMode = false;
+                                            unsetIrcMode();
                                             break;
                                         case 'n':
-                                            if (readInputFile)
-                                            return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: --stdin is mutually exclusive with with --infile and --binfil");
-                                            stdin = true;
-                                            break;
-                                        case 'z':
-                                            append = false;
+                                            setStdIn();
                                             break;
                                         case 'Z':
-                                            append = true;
+                                            setAppend();
+                                            break;
+                                        case 'z':
+                                            unsetAppend();
+                                            break;
+                                        case 'r':
+                                            setStartAddr();
+                                            break;
+                                        case 'R':
+                                            setEndAddr();
                                             break;
                                         default:
-                                            return ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
+                                            ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
+                                            return (int)ErrorCode.BadArgument;
                                     }
                             }
                         }
                         else
-                            return ShowShortHelp(ErrorCode.BadArgument, "Error: Bad argument " + args[curArg]);
+                            ShowShortHelp(ErrorCode.BadArgument, "Error: Bad argument " + args[curArg]);
                         curArg++;
                     }
                 }
@@ -363,7 +453,7 @@ namespace eZDisasm
             {
                 while (expectedArgs.Count > 1)
                     Console.Error.WriteLine("Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
-                return ShowShortHelp(ErrorCode.MissingImpliedArgument, "Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
+                ShowShortHelp(ErrorCode.MissingImpliedArgument, "Error: Missing implied argument " + expectedArgs.Dequeue().ToString());
             }
             #endregion
 
@@ -390,7 +480,7 @@ namespace eZDisasm
                     }
                     catch
                     {
-                        return ShowShortHelp(ErrorCode.FileOpenError, "Error opening input file " + inputFileName);
+                        ShowShortHelp(ErrorCode.FileOpenError, "Error opening input file " + inputFileName);
                     }
                 }
                 else
@@ -402,126 +492,177 @@ namespace eZDisasm
                 if (baseAddressPrefixRegex.IsMatch(inputText))
                 {
                     if (hasBaseAddress)
-                        return ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Input string has base address specifier, which conflicts with -b argument.");
+                        ShowShortHelp(ErrorCode.ConflictingArgument, "Error: Input string has base address specifier, which conflicts with -b argument.");
                     hasBaseAddress = true;
                     baseAddress = Convert.ToInt32(Regex.Match(inputText, "[0-9A-Fa-f]{1,6}").Value, 16);
                     inputText = baseAddressPrefixRegex.Replace(inputText, "", 1);
                 }
                 if (!Regex.IsMatch(inputText, "^([\\s\\r\\n\\:\\.]*[0-9A-Fa-f][0-9A-Fa-f])+[\\s\\r\\n\\:\\.]*$"))
-                    return ShowShortHelp(ErrorCode.InvalidHexString, "Error: input is not valid hex string");
+                    ShowShortHelp(ErrorCode.InvalidHexString, "Error: input is not valid hex string");
                 List<byte> bytes = new List<byte>();
                 foreach (Match m in Regex.Matches(inputText, "[0-9A-Fa-f][0-9A-Fa-f]"))
                     bytes.Add(Convert.ToByte(m.Value, 16));
                 data = bytes.ToArray();
             }
 
-            eZ80Disassembler.DisassembledInstruction[] instrs =
-                eZ80Disassembler.Disassemble(data, baseAddress, hasBaseAddress, adlMode, z80ClassicMode, addLabels ? "label_" : "", addLabels ? "loc_" : "");
-
-            HashSet<int> knownLabels = new HashSet<int>();
-
-            if (addLabels)
-                foreach (eZ80Disassembler.DisassembledInstruction instr in instrs)
-                    if (instr.IsBranch)
-                        knownLabels.Add(instr.BranchTarget);
+            if (end == 0)
+                end = data.Length;
+            else
+                end -= baseAddress;
+            if (end >= data.Length)
+                end = data.Length - 1;
+            start -= baseAddress;
+            if (start > end)
+                ShowShortHelp(ErrorCode.BadArgument, "Error: End address cannot be before start address");
+            if (start < 0)
+                ShowShortHelp(ErrorCode.BadArgument, "Error: Start address is before start of input data");
 
             StreamsWriter writer = new StreamsWriter();
             if (writeStdOut)
                 writer.StdOutWriter = Console.Out;
             if (writeOutputFile)
-                try
-                {
-                    writer.FileWriter = new StreamWriter(outputFileName, append);
-                }
-                catch
-                {
-                    return ShowShortHelp(ErrorCode.FileOpenError, "Error opening output file " + outputFileName);
-                }
-
-
-            int addrColWidth = 14;
-            int opcodeColWidth = 16;
-            int instrColWidth = 8;
-            for (int j = 0; j < instrs.Length; j++)
+            try
             {
-                eZ80Disassembler.DisassembledInstruction instr = instrs[j];
-                if (addLabels && knownLabels.Contains(instr.StartPosition + baseAddress))
+                writer.FileWriter = new StreamWriter(outputFileName, append);
+            }
+            catch
+            {
+                ShowShortHelp(ErrorCode.FileOpenError, "Error opening output file " + outputFileName);
+            }
+            
+            int addrColWidth = 8;
+            int opcodeColWidth = 14;
+            int instrColWidth = 8;
+                            
+            if (!dumpMode)
+            {
+                eZ80Disassembler.DisassembledInstruction[] instrs =
+                    eZ80Disassembler.Disassemble(data, start, end, baseAddress, hasBaseAddress, adlMode, z80ClassicMode, addLabels ? "label_" : "", addLabels ? "loc_" : "");
+
+                HashSet<int> knownLabels = new HashSet<int>();
+
+                if (addLabels)
+                    foreach (eZ80Disassembler.DisassembledInstruction instr in instrs)
+                        if (instr.IsBranch)
+                            knownLabels.Add(instr.BranchTarget);
+
+                for (int j = 0; j < instrs.Length; j++)
                 {
-                    if (showAddresses)
-                        if (useTabs)
-                            writer.Write("\t");
-                        else
-                            writer.Write("        ");
-                    if (showOpcodes)
-                        if (useTabs)
-                            writer.Write("\t\t");
-                        else
-                            writer.Write("            ");
-                    writer.Write("label_");
-                    if (z80ClassicMode)
-                        writer.Write(((instr.StartPosition + baseAddress) & 0xFFFF).ToString("X4"));
-                    else
-                        writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
-                    writer.Write(":");
-                    if (!ircMode)
-                        writer.WriteLine();
-                    else
-                        writer.Write(" ");
-                }
-                if (showAddresses)
-                {
-                    if (z80ClassicMode)
-                        writer.Write((instr.StartPosition + baseAddress).ToString("X4"));
-                    else
-                        writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
-                    writer.Write(":");
-                    if (useTabs)
-                        writer.Write("\t");
-                    else
+                    eZ80Disassembler.DisassembledInstruction instr = instrs[j];
+                    if (addLabels && knownLabels.Contains(instr.StartPosition + baseAddress))
+                    {
+                        if (showAddresses)
+                            if (useTabs)
+                                writer.Write("\t");
+                            else
+                                for (int c = 0; c < addrColWidth; c++)
+                                    writer.Write(" ");
+                        if (showOpcodes)
+                            if (useTabs)
+                                writer.Write("\t\t");
+                            else
+                                for (int c = 0; c < opcodeColWidth; c++)
+                                    writer.Write(" ");
+                        writer.Write("label_");
                         if (z80ClassicMode)
-                            writer.Write("   ");
+                            writer.Write(((instr.StartPosition + baseAddress) & 0xFFFF).ToString("X4"));
+                        else
+                            writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                        writer.Write(":");
+                        if (!ircMode)
+                            writer.WriteLine();
                         else
                             writer.Write(" ");
-                }
-                if (showOpcodes)
-                {
-                    for (int i = 0; i < instr.Length; i++)
-                        writer.Write(data[instr.StartPosition + i].ToString("X2"));
-                    if (useTabs)
+                    }
+                    if (showAddresses)
                     {
-                        if (instr.Length <= 3)
+                        if (z80ClassicMode)
+                            writer.Write((instr.StartPosition + baseAddress).ToString("X4"));
+                        else
+                            writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                        writer.Write(":");
+                        if (useTabs)
                             writer.Write("\t");
-                        writer.Write("\t");
+                        else
+                            for (int c = z80ClassicMode ? 5 : 7; c < addrColWidth; c++)
+                                writer.Write(" ");
+                    }
+                    if (showOpcodes)
+                    {
+                        for (int i = 0; i < instr.Length; i++)
+                            writer.Write(data[instr.StartPosition + i].ToString("X2"));
+                        if (useTabs)
+                        {
+                            if (instr.Length <= 3)
+                                writer.Write("\t");
+                            writer.Write("\t");
+                        }
+                        else
+                            for (int c = 2 * instr.Length; c < opcodeColWidth; c++)
+                                writer.Write(" ");
                     }
                     else
-                        writer.Write(new String(' ', 14 - 2 * instr.Length));
-                }
-                else
-                    if (!ircMode)
-                        if (useTabs)
-                            writer.Write("\t");
+                        if (!ircMode)
+                            if (useTabs)
+                                writer.Write("\t");
+                            else
+                                writer.Write("    ");
+                    writer.Write(instr.InstructionName);
+                    writer.Write(instr.InstructionSuffix);
+                    if (!String.IsNullOrEmpty(instr.InstructionArguments))
+                    {
+                        if (alignArgs)
+                            if (useTabs)
+                                writer.Write("\t");
+                            else
+                            {
+                                for (int c = instr.InstructionName.Length + instr.InstructionSuffix.Length - 1; c < instrColWidth; c++)
+                                    writer.Write(" ");
+                                writer.Write(" ");
+                            }
                         else
-                            writer.Write("    ");
-                writer.Write(instr.InstructionName);
-                writer.Write(instr.InstructionSuffix);
-                if (!String.IsNullOrEmpty(instr.InstructionArguments))
-                {
-                    if (alignArgs)
-                        if (useTabs)
-                            writer.Write("\t");
+                            writer.Write(" ");
+                        writer.Write(instr.InstructionArguments);
+                    }
+                    if (j != instrs.Length - 1)
+                        if (!ircMode)
+                            writer.WriteLine();
                         else
-                            writer.Write(new String(' ', instr.InstructionName.Length + instr.InstructionSuffix.Length < 10 ? 10 - instr.InstructionName.Length - instr.InstructionSuffix.Length : 3));
-                    else
-                        writer.Write(" ");
-                    writer.Write(instr.InstructionArguments);
+                            writer.Write(" \\ ");
                 }
-                if (j != instrs.Length - 1)
-                    if (!ircMode)
-                        writer.WriteLine();
-                    else
-                        writer.Write(" \\ ");
             }
-
+            else
+            {
+                int addr = start;
+                while (addr++ < end)
+                {
+                    if (showAddresses)
+                    {
+                        if (z80ClassicMode)
+                            writer.Write((instr.StartPosition + baseAddress).ToString("X4"));
+                        else
+                            writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                        writer.Write(":");
+                        if (useTabs)
+                            writer.Write("\t");
+                        else
+                            for (int c = z80ClassicMode ? 5 : 7; c < addrColWidth; c++)
+                                writer.Write(" ");
+                    }
+                    if (showOpcodes)
+                    {
+                        for (int c = ; c < opcodeColWidth; c++)
+                            writer.Write(" ");
+                    }
+                    else
+                        if (!ircMode)
+                            if (useTabs)
+                                writer.Write("\t");
+                            else
+                                writer.Write("    ");
+                }    
+            }
+            
             if (pause)
                 Console.ReadKey();
 
@@ -577,7 +718,7 @@ namespace eZDisasm
         }
 #endif
 
-        static int ShowShortHelp(ErrorCode e, string msg)
+        static void ShowShortHelp(ErrorCode e, string msg)
         {
 #if WIN_32
             if (newConsole && pause)
@@ -587,7 +728,7 @@ namespace eZDisasm
                 Console.Write("Message: ");
                 Console.Error.WriteLine(msg);
                 Console.ReadKey();
-                return (int)e;
+                Environment.Exit((int)e);
             }
 #endif
             //Console.WriteLine(msg);
@@ -600,7 +741,7 @@ namespace eZDisasm
             if (pause)
                 Console.ReadKey();
 #endif
-            return (int)e;
+            Environment.Exit((int)e);
         }
 
         static void ShowHelp()
@@ -619,6 +760,7 @@ namespace eZDisasm
                     Console.WriteLine(reader.ReadToEnd());
             if (pause)
                 Console.ReadKey();
+            Environment.Exit((int)ErrorCode.NoError);
         }
     }
 }

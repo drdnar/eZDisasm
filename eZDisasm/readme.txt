@@ -20,6 +20,10 @@ Options:
     Set eZ80 disassembly mode
  -e, --Z80
     Set classic Z80 disassembly mode, implies -a
+ -f, --text-dump
+    Convert input into text .db statements instead of disassembly
+ -g, --ascii
+    Convert input into ASCII .db statements instead of disassembly
  -h, --hex-dump
     Convert input into hex .db statements instead of disassembly
  -H, --word-dump
@@ -47,10 +51,8 @@ Options:
     Pause when done
  -r <address>, --from <address>
     Start disassembly range at <address>
-    If -b is set, this is relative to base address
  -R <address>, --to <address>
     Stop disassembly range at <address>
-    If -b is set, this is relative to base address
  -s, --pad-tabs
     Use tabs for column alignment instead of spaces
  -t, --no-align

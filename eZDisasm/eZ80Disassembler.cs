@@ -34,7 +34,7 @@ namespace eZDisasm
             }
         }
         
-        public static DisassembledInstruction[] Disassemble(byte[] data, int baseAddress = 0, bool hasBaseAddress = false, bool adlMode = true, bool plainZ80Mode = false, string labelPrefixString = "", string locPrefixString = "")
+        public static DisassembledInstruction[] Disassemble(byte[] data, int start, int end, int baseAddress = 0, bool hasBaseAddress = false, bool adlMode = true, bool plainZ80Mode = false, string labelPrefixString = "", string locPrefixString = "")
         {
             List<DisassembledInstruction> disasm = new List<DisassembledInstruction>();
             eZ80Disassembler dis = new eZ80Disassembler();
@@ -46,10 +46,10 @@ namespace eZDisasm
                 dis.HasBaseAddress = hasBaseAddress;
             dis.AdlMode = adlMode;
             dis.Z80PlainMode = plainZ80Mode;
-            dis.CurrentByte = 0;
+            dis.CurrentByte = start;
             dis.LabelPrefixString = labelPrefixString;
             dis.LocationPrefixString = locPrefixString;
-            while (dis.CurrentByte < dis.Data.Length)
+            while (dis.CurrentByte <= end)
                 disasm.Add(dis.DoDisassembleInstruction());
 
             return disasm.ToArray();
@@ -318,7 +318,7 @@ namespace eZDisasm
                         {
                             if (CurrentPrefix != AddressingModePrefix.None)
                             {
-                                CurrentInstruction.InstructionName = "noni";
+                                CurrentInstruction.InstructionName = "NONI";
                                 // Last prefix is being ignored, but this one might matter.
                                 // So unwind CurrentByte so we can process it again.
                                 CurrentByte--;
@@ -573,9 +573,9 @@ namespace eZDisasm
                         case 2:
                         case 3:
                             if ((b & 1) != 0)
-                                indexreg = "IY";
+                                indexreg = "iy";
                             else
-                                indexreg = "IX";
+                                indexreg = "ix";
                             CurrentInstruction.InstructionName = "lea";
                             if (GetField(Field.q, b) == 0)
                             {
@@ -1079,6 +1079,19 @@ namespace eZDisasm
                         CurrentInstruction.InstructionName = "add";
                         CurrentInstruction.InstructionArguments = indexRegister + ", sp";
                         break;
+                    case 0x60:
+                    case 0x61:
+                    case 0x62:
+                    case 0x63:
+                    case 0x67:
+                    case 0x68:
+                    case 0x69:
+                    case 0x6A:
+                    case 0x6B:
+                    case 0x6F:
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = indexRegister + TableR[GetField(Field.y, b)] + ", " + TableR[GetField(Field.z, b)];
+                        break;
                     case 0x64:
                     case 0x65:
                     case 0x6C:
@@ -1095,6 +1108,19 @@ namespace eZDisasm
                     case 0x77:
                         CurrentInstruction.InstructionName = "ld";
                         CurrentInstruction.InstructionArguments = "(" + indexRegister + " + " + SignedByte((sbyte)Data[CurrentByte++]) + "), " + TableR[GetField(Field.z, b)];
+                        break;
+                    case 0x44:
+                    case 0x45:
+                    case 0x4C:
+                    case 0x4D:
+                    case 0x54:
+                    case 0x55:
+                    case 0x5C:
+                    case 0x5D:
+                    case 0x7C:
+                    case 0x7D:
+                        CurrentInstruction.InstructionName = "ld";
+                        CurrentInstruction.InstructionArguments = TableR[GetField(Field.y, b)] + ", " + indexRegister + TableR[GetField(Field.z, b)];
                         break;
                     case 0x46:
                     case 0x4E:
