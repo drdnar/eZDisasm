@@ -1,5 +1,5 @@
 ﻿eZ80 Disassembler
-24 January 2015
+2 February 2015
 
 Usage: eZDisasm [-options] [-b <baseAddress>] [-o <outfile>] <hexString>
   OR   eZDisasm [-options] [-b <baseAddress>] [-o <outfile>] -i file.txt
@@ -20,8 +20,6 @@ Options:
     Set eZ80 disassembly mode
  -e, --Z80
     Set classic Z80 disassembly mode, implies -a
- -f, --text-dump
-    Convert input into text .db statements instead of disassembly
  -g, --ascii
     Convert input into ASCII .db statements instead of disassembly
  -h, --hex-dump

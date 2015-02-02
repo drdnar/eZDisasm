@@ -345,6 +345,15 @@ namespace eZDisasm
                                     case "--show-addresses":
                                         setShowAddresses();
                                         break;
+                                    case "--hex-dump":
+                                        setHexMode();
+                                        break;
+                                    case "--word-dump":
+                                        setWordMode();
+                                        break;
+                                    case "--ascii":
+                                        setAsciiMode();
+                                        break;
                                     default:
                                         ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option " + args[curArg]);
                                         return (int)ErrorCode.BadArgument;
@@ -438,6 +447,15 @@ namespace eZDisasm
                                             break;
                                         case 'R':
                                             setEndAddr();
+                                            break;
+                                        case 'h':
+                                            setHexMode();
+                                            break;
+                                        case 'H':
+                                            setWordMode();
+                                            break;
+                                        case 'g':
+                                            setAsciiMode();
                                             break;
                                         default:
                                             ShowShortHelp(ErrorCode.BadArgument, "Error: Unrecognized option -" + args[curArg][i]);
@@ -636,15 +654,22 @@ namespace eZDisasm
             }
             else
             {
-                /*int addr = start;
+                string size = "X2";
+                if (wordMode)
+                    if (adlMode)
+                        size = "X6";
+                    else
+                        size = "X4";
+                int num;
+                int addr = start - 1;
                 while (addr++ < end)
                 {
                     if (showAddresses)
                     {
                         if (z80ClassicMode)
-                            writer.Write((instr.StartPosition + baseAddress).ToString("X4"));
+                            writer.Write((addr + baseAddress).ToString("X4"));
                         else
-                            writer.Write((instr.StartPosition + baseAddress).ToString("X6"));
+                            writer.Write((addr + baseAddress).ToString("X6"));
                         writer.Write(":");
                         if (useTabs)
                             writer.Write("\t");
@@ -654,8 +679,8 @@ namespace eZDisasm
                     }
                     if (showOpcodes)
                     {
-                        for (int c = ; c < opcodeColWidth; c++)
-                            writer.Write(" ");
+                        /*for (int c = ; c < opcodeColWidth; c++)
+                            writer.Write(" ");*/
                     }
                     else
                         if (!ircMode)
@@ -663,7 +688,30 @@ namespace eZDisasm
                                 writer.Write("\t");
                             else
                                 writer.Write("    ");
-                }    */
+                    num = data[addr];
+                    if (hexMode)
+                    {
+                        if (wordMode)
+                        {
+                            num |= data[++addr] << 8;
+                            if (adlMode)
+                                num |= data[++addr] << 16;
+                        }
+                        writer.Write(num.ToString(size));
+                        writer.Write(", ");
+                    }
+                    else
+                    {
+                        if (num >= 0x20 && num <= 0x7E)
+                            writer.Write(((char)num).ToString());
+                        else
+                        {
+                            writer.Write("\", ");
+                            writer.Write(num.ToString("X2"));
+                            writer.Write(", \"");
+                        }
+                    }
+                }
             }
             
             if (pause)
