@@ -110,7 +110,9 @@ namespace eZDisasm
             bool ircMode = false;
             bool append = true;
             int start = 0;
+            bool haveStart = false;
             int end = 0;
+            bool haveEnd = false;
             bool dumpMode = false;
             bool hexMode = true;
             bool wordMode = false;
@@ -186,12 +188,14 @@ namespace eZDisasm
                     if (start != 0)
                         ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate start address");
                     expectedArgs.Enqueue(StringArgumentType.StartAddress);
+                    haveStart = true;
                 };
             Action setEndAddr = () =>
                 {
                     if (end != 0)
                         ShowShortHelp(ErrorCode.DuplicateArgument, "Error: Duplicate end address");
                     expectedArgs.Enqueue(StringArgumentType.EndAddress);
+                    haveEnd = true;
                 };
             Action setHexMode = () =>
                 {
@@ -316,7 +320,7 @@ namespace eZDisasm
                                         unsetAlignArgs();
                                         break;
                                     case "--hide-opcodes":
-                                        setShowOpcodes();
+                                        unsetShowOpcodes();
                                         break;
                                     case "--no-pause":
                                         unsetPause();
@@ -395,7 +399,7 @@ namespace eZDisasm
                                             setShowOpcodes();
                                             break;
                                         case 'x':
-                                            unsetShowLabels();
+                                            unsetShowOpcodes();
                                             break;
                                         case 'T':
                                             setAlignArgs();
@@ -532,7 +536,8 @@ namespace eZDisasm
                 end -= baseAddress;
             if (end >= data.Length)
                 end = data.Length - 1;
-            start -= baseAddress;
+            if (haveStart)
+                start -= baseAddress;
             if (start > end)
                 ShowShortHelp(ErrorCode.BadArgument, "Error: End address cannot be before start address");
             if (start < 0)
