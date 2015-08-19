@@ -1,5 +1,5 @@
 ﻿eZ80 Disassembler
-2 February 2015
+19 August 2015
 
 Usage: eZDisasm [-options] [-b <baseAddress>] [-o <outfile>] <hexString>
   OR   eZDisasm [-options] [-b <baseAddress>] [-o <outfile>] -i file.txt
